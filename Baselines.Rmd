@@ -1,14 +1,9 @@
----
-title: "Basline models for Dynamic Hedge"
-author: "Xin Jing"
-date: "2017年6月8日"
-output: html_document
----
 
-# remember to import library("rugarch") before running the program
+
 
 # CCC Dynamic Hedge(Training set)
 ```{r,eval=TRUE, echo=FALSE}
+# remember to import library("rugarch") before running the program
 library("readxl")
 
 testing_size = 80
@@ -48,48 +43,11 @@ var(s - b*f)
 var(s - best*f)
 ```
 
-# EUR:
-# Without Hedging: 3.483064e-05
-# Naive Hedge: 6.443201e-06
-# Conventional Hedge: 6.027845e-06
-# Dynamic Hedge:  6.202285e-06
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 5 epochs, average results after three trials: 6.22746105869044e-06
-
-
-# ASD:
-# Without Hedging: 4.933627e-05
-# Naive Hedge:1.011334e-05
-# Conventional Hedge: 9.495456e-06
-# Dynamic Hedge: 1.006463e-05
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 3 epochs, average results after three trials: 9.782057585304154e-06
-
-
-# BP:
-# Without Hedging: 3.383008e-05
-# Naive Hedge:3.943364e-06
-# Conventional Hedge: 3.876226e-06
-# Dynamic Hedge: 3.684688e-06
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 15, within 3 epochs, average results after three trials: 3.886130780029696e-06
-
-
-# SP500:
-# Without Hedging:6.82476e-05
-# Naive Hedge: 6.332187e-06
-# Conventional Hedge:  5.170403e-06
-# Dynamic Hedge:  5.624029e-06
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 3 epochs, average results after three trials: 5.2223841114187975e-06(very stable)
-
-
-# CAD:
-# Without Hedging:2.551384e-05
-# Naive Hedge: 4.062306e-06
-# Conventional Hedge: 3.896271e-06
-# Dynamic Hedge:  4.080657e-06
-# Using LSTM, RNN1(only past prices changes), batch = 1, time step = 4,hidden units = 10, within 3 epochs, average results after three trials: 3.964477105875235e-06(very stable)
 
 
 # CCC Dynamic Hedge(Testing set)
 ```{r,eval=TRUE, echo=FALSE}
+# remember to import library("rugarch") before running the program
 library("readxl")
 data = read_excel("/Users/xinjing/Desktop/dynamic hedge/BP.xlsx")
 basis = data$log_spot - data$log_futures
@@ -159,156 +117,3 @@ var(testing_s - dynamic_ratios*testing_f)
 
 ```
 
-# EUR:
-# Without Hedging: 2.199741e-05
-# Naive Hedge:2.708794e-07
-# Conventional Hedge: 4.356389e-07
-# Dynamic Hedge: 3.061782e-07
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 5 epochs, average results after three trials: 2.6410875148991017e-07
-
-
-# ASD:
-# Without Hedging: 2.633987e-05
-# Naive Hedge: 7.066315e-07
-# Conventional Hedge: 9.332773e-07
-# Dynamic Hedge: 8.032848e-07
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 3 epochs, average results after three trials:7.029923778014998e-07
-
-
-# BP:
-# Without Hedging: 2.849907e-05
-# Naive Hedge: 2.466863e-07
-# Conventional Hedge: 2.719982e-07
-# Dynamic Hedge: 2.770509e-07(garchOrder = c(1, 1)), 2.224645e-06(garchOrder = c(4, 4))
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 15, within 3 epochs, average results after three trials: 2.416891757521187e-07(very stable)
-
-
-# SP500:
-# Without Hedging: 6.538379e-05
-# Naive Hedge: 6.636125e-06
-# Conventional Hedge:  4.931073e-06
-# Dynamic Hedge:  5.648445e-06
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 10, within 3 epochs, average results after three trials: 4.878123369557861e-06(very stable)
-
-
-# CAD:
-# Without Hedging: 1.630007e-05
-# Naive Hedge:2.624907e-07
-# Conventional Hedge: 2.411519e-07
-# Dynamic Hedge: 2.392148e-07
-# Using LSTM, RNN1(only past prices chages), batch = 1, time step = 4,hidden units = 5, within 3 epochs, average results after three trials: 2.2948679125396727e-07(very stable)
-
-
-# remember to import library("rmgarch") before running the program
-# DCC Dynamic Hedge(Testing set)
-```{r,eval=TRUE, echo=FALSE}
-library("readxl")
-data = read_excel("/Users/xinjing/Desktop/dynamic hedge/SP500_for_dynamic_hedge_2.xlsx")
-basis = data$log_spot - data$log_futures
-basis = basis[1:(length(basis) - 1)]
-# now length(basis) = length(s) - 1
-
-s = data$diff_spot
-s = s[2:length(s)]
-f = data$diff_futures
-f = f[2:length(f)]
-
-# now length(basis) = length(s) = length(f)
-
-#test of dynamic correlation: DCCtest by Engle And Sheppard
-mat = data.frame(s,f)
-DCCtest(mat, garchOrder = c(1,1), n.lags = 1, solver = "solnp", solver.control = list(), cluster = NULL, Z = NULL)
-
-static_ratios = c()
-dynamic_ratios = c()
-
-testing_size = 80
-for (i in 0: (testing_size-1)) 
-{# now getting the training set for each loop
- print(paste0("Current iteration:", i))
- basis1 = basis[1:(length(basis) - testing_size + i)]
- basis_matrix =  matrix(basis1,nrow = length(basis1),ncol = 1,byrow = TRUE)
- spec1= ugarchspec(variance.model=list(model="sGARCH",garchOrder = c(1, 1)),   mean.model=list(armaOrder=c(0,0), include.mean = TRUE, external.regressors = basis_matrix))
- uspec = multispec(replicate(2, spec1))
- dcc.garch11.spec = dccspec(uspec,dccOrder = c(1,1),distribution = "mvnorm")
- s1 = s[1:(length(s) - testing_size + i)]
- s_matrix = matrix(s1,nrow = length(s1),ncol = 1,byrow = TRUE)
- f1 = f[1:(length(f) - testing_size + i)]
- f_matrix = matrix(f1,nrow = length(s1),ncol = 1,byrow = TRUE)
- # s_f_matrix = cbind(s_matrix,f_matrix)
- # s_f_matrix = data.frame(s_matrix,f_matrix)
- s_f_matrix = data.frame(s1,f1)
- dcc.fit = dccfit(dcc.garch11.spec, data = s_f_matrix,solver = c("nloptr","solnp"))
- 
- dcc.fcst = dccforecast(dcc.fit, n.ahead=1) # it is checked that this is equivalent to 
-                                            # the next period stats calculated by hand.
- cov_matrix = rcov(dcc.fcst)
- 
- next_variance_s = cov_matrix[[1]][1]
- next_variance_f = cov_matrix[[1]][4]
- next_cov = cov_matrix[[1]][2]
- 
-
- # Conventional Hedge Ratio
- static_ratio = cov(s1,f1) / var(f1)
- # DCC Dynamic Hedge Ratio
- dcc_dynamic_ratio = next_cov / (next_variance_f) 
- 
- static_ratios[i+1] <- static_ratio
- dynamic_ratios[i+1] <- dcc_dynamic_ratio
- }
-testing_s = s[(length(s) - testing_size + 1) : length(s)]
-testing_f = f[(length(f) - testing_size + 1) : length(f)]
-# Without Hedging:
-var(testing_s)
-# Naive Hedge:
-var(testing_s - testing_f)
-# Conventional Hedge:
-var(testing_s - static_ratios*testing_f)
-# DCC Dynamic Hedge:
-var(testing_s - dynamic_ratios*testing_f)
-```
-
-
-# DCC Dynamic Hedge: results on the testing set
-
-# EUR: 
-# Without Hedging: 2.199741e-05
-# Naive Hedge:2.708794e-07
-# Conventional Hedge: 4.356389e-07
-# Dynamic Hedge: 3.061782e-07
-# DCC Dynamic Hedge: 3.146707e-07
-# RNN: 2.6410875148991017e-07
-
-
-# ASD: 
-# Without Hedging: 2.633987e-05
-# Naive Hedge: 7.066315e-07
-# Conventional Hedge: 9.332773e-07
-# Dynamic Hedge: 8.032848e-07
-# DCC Dynamic Hedge:8.81595e-07
-# RNN: 7.029923778014998e-07
-
-# BP: 
-# Without Hedging: 2.849907e-05
-# Naive Hedge: 2.466863e-07
-# Conventional Hedge: 2.719982e-07
-# Dynamic Hedge: 2.770509e-07(garchOrder = c(1, 1)), 2.224645e-06(garchOrder = c(4, 4))
-# DCC Dynamic Hedge:3.173687e-07
-# RNN: 2.416891757521187e-07
-
-# SP500: 
-# Without Hedging: 6.538379e-05
-# Naive Hedge: 6.636125e-06
-# Conventional Hedge:  4.931073e-06
-# Dynamic Hedge:  5.648445e-06
-# DCC Dynamic Hedge:5.100829e-06
-# RNN: 4.878123369557861e-06
-
-# CAD: 
-# Without Hedging: 1.630007e-05
-# Naive Hedge:2.624907e-07
-# Conventional Hedge: 2.411519e-07
-# Dynamic Hedge: 2.392148e-07
-# DCC Dynamic Hedge:2.835467e-07
-# RNN: 2.2948679125396727e-07
